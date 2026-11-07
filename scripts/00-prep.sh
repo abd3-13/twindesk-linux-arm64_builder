@@ -18,8 +18,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=../config.sh
 . "$ROOT/config.sh"
-C="$ROOT/chroot"
-SWAP="$ROOT/build.swap"
+C="$WORKSPACE/chroot"
+SWAP="$WORKSPACE/build.swap"
 KEYRING=${KEYRING:-/usr/share/keyrings/debian-archive-keyring.gpg}
 MARK="$C/root/.twindesk-stage0-done"
 MIN_FREE_KB=8388608   # 8 GB

@@ -21,10 +21,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=../config.sh
 . "$ROOT/config.sh"
-LOG=${LOG:-"$ROOT/build.log"}
+LOG=${LOG:-"$WORKSPACE/build.log"}
 
 printf 'TwinDesk arm64 build — %s\n' "$(date -Is)"
-printf 'Workspace: %s\nLog: %s\n\n' "$ROOT" "$LOG"
+printf 'Workspace: %s\nLog: %s\n\n' "$WORKSPACE" "$LOG"
 
 set -o pipefail
 {
@@ -47,4 +47,4 @@ if [ "$STATUS" -ne 0 ]; then
 fi
 
 printf '\nBUILD OK. Artifact:\n'
-ls -lh "$ROOT"/TwinDesk-*-arm64.deb 2>/dev/null || true
+ls -lh "$WORKSPACE"/TwinDesk-*-arm64.deb 2>/dev/null || true

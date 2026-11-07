@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=../config.sh
 . "$ROOT/config.sh"
-C="$ROOT/chroot"
+C="$WORKSPACE/chroot"
 FAIL=0
 WARN=0
 
@@ -28,7 +28,7 @@ warn() { printf 'WARN: %s\n' "$*" >&2; WARN=$((WARN + 1)); }
 if [ "${1:-}" != "" ]; then
   DEB="$1"
 else
-  DEB=$(find "$ROOT" -maxdepth 1 -type f -name 'TwinDesk-*-arm64.deb' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
+  DEB=$(find "$WORKSPACE" -maxdepth 1 -type f -name 'TwinDesk-*-arm64.deb' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
 fi
 [ -n "${DEB:-}" ] && [ -f "$DEB" ] || {
   printf 'usage: %s <file.deb>\n' "$(basename "$0")" >&2
@@ -73,7 +73,7 @@ echo "helper files in package: $HELPER_COUNT"
 [ "$HELPER_COUNT" -gt 0 ] || fail "no linux-helper/bin files in package"
 
 # --- extract for ELF checks -----------------------------------------------
-VERIFY="$ROOT/.verify"
+VERIFY="$WORKSPACE/.verify"
 say "Extracting to $VERIFY for ELF checks"
 rm -rf "$VERIFY"
 mkdir -p "$VERIFY"
@@ -115,7 +115,8 @@ if [ -x "$C/usr/bin/apt-get" ]; then
   sudo rm -rf "$H"
   sudo mkdir -p "$H"
   sudo dpkg-deb -x "$DEB" "$H"
-  BIN=$(find "$H" -type f -path '*linux-helper/bin/macshare-linuxhelper' | head -1 || true)
+  # /root is mode 700 inside the chroot, so search it as root.
+  BIN=$(sudo find "$H" -type f -path '*linux-helper/bin/macshare-linuxhelper' | head -1 || true)
   if [ -n "$BIN" ]; then
     REL=${BIN#"$C"}
     if sudo chroot "$C" /bin/bash -lc "ldd '$REL'"; then

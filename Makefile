@@ -4,6 +4,12 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
+# Generated state lives in WORKSPACE (repository root by default, or the
+# parent directory when the clone sits inside an existing build workspace).
+# Override on the command line: make WORKSPACE=/srv/twindesk all
+WORKSPACE ?= $(shell bash -c '. ./config.sh && printf "%s" "$$WORKSPACE"')
+export WORKSPACE
+
 .PHONY: help all fetch prep toolchain build verify clean distclean lint
 
 help:
@@ -49,4 +55,4 @@ clean:
 	bash scripts/99-cleanup.sh
 
 distclean: clean
-	rm -rf repo .verify build.log
+	rm -rf $(WORKSPACE)/repo $(WORKSPACE)/.verify $(WORKSPACE)/build.log

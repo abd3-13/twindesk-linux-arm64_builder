@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=../config.sh
 . "$ROOT/config.sh"
-C="$ROOT/chroot"
-SWAP="$ROOT/build.swap"
+C="$WORKSPACE/chroot"
+SWAP="$WORKSPACE/build.swap"
 
 say() { printf '\n==> %s\n' "$*"; }
 
@@ -41,8 +41,8 @@ else
   say "Keeping swap file (KEEP_SWAP=1 or not present)"
 fi
 
-rm -rf "$ROOT/.verify"
+rm -rf "$WORKSPACE/.verify"
 
-say "Remaining files in $ROOT"
-ls -lh "$ROOT"
+say "Remaining files in $WORKSPACE"
+ls -lh "$WORKSPACE"
 say "Cleanup complete — the .deb and repo/ were kept"

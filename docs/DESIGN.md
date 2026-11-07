@@ -59,7 +59,8 @@ resumed by re-running only the failing stage.
 run-all.sh      runs the five stages in order, tees to build.log
 ```
 
-State is kept in well-known locations inside the workspace:
+State is kept in well-known locations inside `WORKSPACE` (the repository root
+by default; the parent directory when the clone sits in an existing workspace):
 
 | Path | Owner | Reused by |
 |---|---|---|

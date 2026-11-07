@@ -87,6 +87,7 @@ environment or on the `make` command line:
 | `CARGO_BUILD_JOBS` | `4` | Compile parallelism |
 | `NODE_HEAP_MB` | `1536` | Node old-space limit |
 | `SKIP_SWAP` | `0` | Set to `1` when the host already has enough swap/RAM |
+| `WORKSPACE` | repository root | Where `repo/`, `chroot/`, `build.swap`, `build.log` and the `.deb` live. Defaults to the parent directory if the clone sits inside an existing workspace (a sibling `repo/` or `chroot/`). |
 
 Examples:
 
@@ -94,7 +95,13 @@ Examples:
 TWINDESK_VERSION=2.6.0 make fetch build
 SUITE=bookworm RECREATE=1 make prep
 CARGO_BUILD_JOBS=2 NODE_HEAP_MB=1024 make build
+WORKSPACE=/srv/twindesk-build make all
 ```
+
+`WORKSPACE` is where all generated state goes. It defaults to the repository
+root, except when the clone is placed inside a directory that already contains
+`repo/` or `chroot/` — then that parent is reused, so an existing build
+environment keeps working.
 
 ## How it works
 
@@ -189,8 +196,8 @@ because the runner has enough RAM.
 └── .github/workflows/build.yml
 ```
 
-Generated paths (`repo/`, `chroot/`, `build.swap`, `build.log`, `*.deb`) are
-ignored by Git.
+Generated paths (`repo/`, `chroot/`, `build.swap`, `build.log`, `*.deb`) live in
+`WORKSPACE` and are ignored by Git.
 
 ## License
 

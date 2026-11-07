@@ -21,8 +21,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=../config.sh
 . "$ROOT/config.sh"
-REPO="$ROOT/repo"
-C="$ROOT/chroot"
+REPO="$WORKSPACE/repo"
+C="$WORKSPACE/chroot"
 PATCH="$ROOT/patches/arm64.patch"
 JOBS=$CARGO_BUILD_JOBS
 HEAP=$NODE_HEAP_MB
@@ -125,15 +125,15 @@ mapfile -t DEBS < <(find "$C/build/linux/dist" -maxdepth 1 -type f -name '*.deb'
 DEB="${DEBS[-1]}"
 BASE="$(basename "$DEB")"
 
-say "Copying $BASE back to $ROOT"
-sudo cp -f "$DEB" "$ROOT/$BASE"
-sudo chown "$(id -u):$(id -g)" "$ROOT/$BASE"
-ls -lh "$ROOT/$BASE"
+say "Copying $BASE back to $WORKSPACE"
+sudo cp -f "$DEB" "$WORKSPACE/$BASE"
+sudo chown "$(id -u):$(id -g)" "$WORKSPACE/$BASE"
+ls -lh "$WORKSPACE/$BASE"
 
 if [ "$BASE" != "$EXPECTED_DEB" ]; then
   printf 'NOTE: artifact name is %s (expected %s)\n' "$BASE" "$EXPECTED_DEB" >&2
 fi
 
-sha256sum "$ROOT/$BASE"
+sha256sum "$WORKSPACE/$BASE"
 
-say "Stage 2 complete: $ROOT/$BASE"
+say "Stage 2 complete: $WORKSPACE/$BASE"
