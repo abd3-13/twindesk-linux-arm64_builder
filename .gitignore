@@ -1,0 +1,18 @@
+# Build environment
+/chroot/
+/build.swap
+/repo/
+/.verify/
+
+# Build output
+/TwinDesk-*.deb
+/TwinDesk-*.AppImage
+*.deb
+
+# Logs
+/build.log
+*.log
+
+# Editors / OS
+.DS_Store
+*.swp

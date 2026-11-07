@@ -19,11 +19,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
+# shellcheck source=../config.sh
+. "$ROOT/config.sh"
 REPO="$ROOT/repo"
 C="$ROOT/chroot"
-PATCH="$SCRIPT_DIR/patches/arm64.patch"
-JOBS=${CARGO_BUILD_JOBS:-4}
-HEAP=${NODE_HEAP_MB:-1536}
+PATCH="$ROOT/patches/arm64.patch"
+JOBS=$CARGO_BUILD_JOBS
+HEAP=$NODE_HEAP_MB
+EXPECTED_DEB="TwinDesk-${TWINDESK_VERSION}-${DEB_ARCH}.deb"
 
 say() { printf '\n==> %s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -63,6 +66,9 @@ sudo cp -a "$REPO/." "$C/build/"
 INNER_ENV='
   export HOME=/root
   export PATH=/root/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+  # Force electron-builder to use the apt/gem fpm; its auto-downloaded fpm
+  # can be an x86-64 binary on arm64 and then fails while packaging the .deb.
+  export USE_SYSTEM_FPM=true
   export CARGO_BUILD_JOBS='"$JOBS"'
   export CARGO_HOME=/root/.cargo
   export RUSTUP_HOME=/root/.rustup
@@ -94,6 +100,10 @@ done
 # --- build -----------------------------------------------------------------
 # electron-builder downloads its own tooling (app-builder, fpm, Electron) on
 # first use; retry a couple of times on a lossy connection.
+# Remove a half-extracted app dir from an interrupted run: electron-builder
+# then fails with ENOENT renaming electron -> twindesk.
+say "Removing stale electron-builder output"
+sudo rm -rf "$C/build/linux/dist/linux-arm64-unpacked"
 BUILT=0
 for attempt in 1 2 3; do
   say "npm run dist (attempt $attempt/3; helper + Rust lane + electron-builder -> .deb)"
@@ -120,8 +130,8 @@ sudo cp -f "$DEB" "$ROOT/$BASE"
 sudo chown "$(id -u):$(id -g)" "$ROOT/$BASE"
 ls -lh "$ROOT/$BASE"
 
-if [ "$BASE" != "TwinDesk-2.5.3-arm64.deb" ]; then
-  printf 'NOTE: artifact name is %s (expected TwinDesk-2.5.3-arm64.deb)\n' "$BASE" >&2
+if [ "$BASE" != "$EXPECTED_DEB" ]; then
+  printf 'NOTE: artifact name is %s (expected %s)\n' "$BASE" "$EXPECTED_DEB" >&2
 fi
 
 sha256sum "$ROOT/$BASE"

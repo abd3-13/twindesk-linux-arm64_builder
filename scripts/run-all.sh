@@ -19,10 +19,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
+# shellcheck source=../config.sh
+. "$ROOT/config.sh"
 LOG=${LOG:-"$ROOT/build.log"}
-
-export CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-4}
-export NODE_HEAP_MB=${NODE_HEAP_MB:-1536}
 
 printf 'TwinDesk arm64 build — %s\n' "$(date -Is)"
 printf 'Workspace: %s\nLog: %s\n\n' "$ROOT" "$LOG"

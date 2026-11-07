@@ -16,10 +16,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
+# shellcheck source=../config.sh
+. "$ROOT/config.sh"
 C="$ROOT/chroot"
 SWAP="$ROOT/build.swap"
-MIRROR=${MIRROR:-http://deb.debian.org/debian}
-SUITE=${SUITE:-bullseye}
 KEYRING=${KEYRING:-/usr/share/keyrings/debian-archive-keyring.gpg}
 MARK="$C/root/.twindesk-stage0-done"
 MIN_FREE_KB=8388608   # 8 GB
@@ -47,7 +47,11 @@ case "$(df -PTk "$ROOT" | awk 'NR==2{print $2}')" in
 esac
 
 # --- temporary swap (4 GB) -------------------------------------------------
-if ! swapon --show=NAME --noheadings 2>/dev/null | grep -qx "$SWAP"; then
+# CI runners and large hosts already have enough memory; SKIP_SWAP=1 avoids a
+# pointless 4 GB file. The build also works without swap, just slower under OOM.
+if [ "${SKIP_SWAP:-0}" = "1" ]; then
+  say "SKIP_SWAP=1 — not creating or enabling temporary swap"
+elif ! swapon --show=NAME --noheadings 2>/dev/null | grep -qx "$SWAP"; then
   if [ ! -f "$SWAP" ]; then
     say "Creating 4 GB temporary swap file at $SWAP"
     sudo fallocate -l 4G "$SWAP" || sudo dd if=/dev/zero of="$SWAP" bs=1M count=4096 status=progress
@@ -56,9 +60,13 @@ if ! swapon --show=NAME --noheadings 2>/dev/null | grep -qx "$SWAP"; then
   fi
   say "Enabling temporary swap"
   sudo swapon "$SWAP"
+else
+  say "Temporary swap already enabled"
 fi
-say "Swap in use"
-swapon --show
+if swapon --show=NAME --noheadings 2>/dev/null | grep -qx "$SWAP"; then
+  say "Swap in use"
+  swapon --show
+fi
 free -h
 
 # --- optional recreate -----------------------------------------------------
@@ -108,8 +116,8 @@ EOF
   sudo chroot "$C" /bin/bash -lc 'export DEBIAN_FRONTEND=noninteractive; \
     apt-get -o Dpkg::Progress-Fancy=1 -y --no-install-recommends install \
       build-essential pkg-config curl ca-certificates xz-utils unzip file binutils \
-      python3-minimal libx11-dev libxi-dev libxtst-dev libxext-dev libxrandr-dev \
-      libxfixes-dev libglib2.0-dev'
+      python3-minimal ruby ruby-dev libx11-dev libxi-dev libxtst-dev libxext-dev \
+      libxrandr-dev libxfixes-dev libglib2.0-dev'
 
   say "Cleaning apt archives inside the chroot"
   sudo chroot "$C" /bin/bash -lc 'apt-get clean; rm -rf /var/lib/apt/lists/*'
