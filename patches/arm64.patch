@@ -1,0 +1,39 @@
+diff --git a/linux/installer/build.js b/linux/installer/build.js
+index 4633276..5843547 100644
+--- a/linux/installer/build.js
++++ b/linux/installer/build.js
+@@ -71,7 +71,10 @@ async function main() {
+   if (!fs.existsSync(path.join(LIN, 'vendor', 'scrcpy-server'))) {
+     copy(path.join(ROOT, 'mac', 'vendor', 'scrcpy-server'), path.join(STAGE, 'linux', 'vendor', 'scrcpy-server'));
+   }
+-  await fetchAdb(path.join(STAGE, 'linux', 'vendor', 'adb'));
++  // Google's platform-tools zip is x86-64 only. On arm64 the package uses the
++  // distribution's adb instead (see deb.recommends below), otherwise the app
++  // would pick a bundled binary that cannot execute.
++  if (process.arch === 'x64') await fetchAdb(path.join(STAGE, 'linux', 'vendor', 'adb'));
+   // The Android app with notification access, installed over the phone's through wireless debugging
+   // (phone-bridge.js installFull).
+   const dist = path.join(ROOT, 'android', 'dist');
+@@ -101,7 +104,7 @@ async function main() {
+ 
+   console.log('Packaging…');
+   await builder.build({
+-    targets: builder.Platform.LINUX.createTarget(['AppImage', 'deb'], builder.Arch.x64),
++    targets: builder.Platform.LINUX.createTarget(['deb'], builder.Arch.arm64),
+     projectDir: LIN,
+     config: {
+       appId: 'org.macshare.linux',
+@@ -127,8 +130,11 @@ async function main() {
+         // devices not on this network: recommended, not needed.
+         depends: ['libgtk-3-0 | libgtk-3-0t64', 'libnotify4', 'libnss3', 'libxss1', 'libxtst6', 'xdg-utils',
+           'libatspi2.0-0 | libatspi2.0-0t64', 'libuuid1', 'libsecret-1-0', 'libxi6', 'libxrandr2', 'libxfixes3',
+-          'openssl', 'dbus', 'pulseaudio-utils | pipewire-pulse', 'policykit-1 | pkexec', 'libglib2.0-0 | libglib2.0-0t64'],
+-        recommends: ['bluez', 'network-manager'],
++          'openssl', 'dbus', 'pulseaudio-utils | pipewire-pulse', 'policykit-1 | pkexec', 'libglib2.0-0 | libglib2.0-0t64',
++          // Electron's direct NEEDED libraries that lean arm64 installs may lack.
++          'libasound2 | libasound2t64', 'libgbm1', 'libxkbcommon0', 'libxcomposite1', 'libxdamage1',
++          'libcups2 | libcups2t64', 'libudev1'],
++        recommends: ['bluez', 'network-manager', 'adb'],
+         priority: 'optional',
+         fpm: systemFiles,
+       },
